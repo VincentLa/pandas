@@ -6630,14 +6630,70 @@ class NDFrame(PandasObject, SelectionMixin):
 
         Examples
         --------
-        DataFrame results
+        >>> idx = pd.date_range('2017-12-08', periods=6, freq='10D')
+        ... df = pd.DataFrame({
+        ...          'state': ['NY', 'NY', 'NY', 'CA', 'CA', 'CA'],
+        ...          'city': ['NY_1', 'NY_1', 'NY_2', 'CA_1', 'CA_2', 'CA_2'],
+        ...          'values': [1, 2, 3, 4, 5, 6]
+        ...      }, index=idx)
+        ... df.index.name = 'date'
+        >>> df
+                     city   state  values
+              date
+        2018-12-08   NY_1   NY          1
+        2018-12-18   NY_1   NY          2
+        2018-12-28   NY_2   NY          3
+        2018-01-07   CA_1   CA          4
+        2018-01-17   CA_2   CA          5
+        2018-01-27   CA_2   CA          6
 
-        >>> data.groupby(func, axis=0).mean()
-        >>> data.groupby(['col1', 'col2'])['col3'].mean()
+        We can pass a function into the ``by`` parameter which is then
+        called on each value of the index. For example,
 
-        DataFrame with hierarchical index
+        >>> df.groupby(lambda x: x.year).mean()
+                values
+        2017    2
+        2018    5
 
-        >>> data.groupby(['col1', 'col2']).mean()
+        Another example is that we can pass a string representing
+        a column name.
+
+        >>> df.groupby('city').mean()
+                values
+        city
+        CA_1    4.0
+        CA_2    5.5
+        NY_1    1.5
+        NY_2    3.0
+
+        We can also pass in a list of strings which will create a
+        hierarchical index
+
+        >>> df.groupby(['city', 'state']).mean()
+                       values
+        city    state
+        CA_1       CA     4.0
+        CA_2       CA     5.5
+        NY_1       NY     1.5
+        NY_2       NY     3.0
+
+        Note that when passing a function to the ``by`` parameter that returns
+        a tuple, make sure that the index name is a list of the same size.
+        Otherwise, you may get a ``ValueError: Names should be list-like for a
+        MultiIndex`` error.
+
+        >>> df.index.name = ['year', 'month']
+        >>> df.groupby(lambda x: (x.year, x.month)).mean()
+                    values
+        (2017, 12)  2
+        (2018, 1)   5
+
+        Alternatively, we could also group by multiple-indices.
+
+        >>> df.groupby([df.index.year, df.index.month]).mean()
+                    values
+        2017    12  2
+        2018    1   5
 
         Notes
         -----
