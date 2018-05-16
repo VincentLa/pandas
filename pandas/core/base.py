@@ -1032,6 +1032,88 @@ class IndexOpsMixin(object):
         Returns
         -------
         counts : Series
+
+        Examples
+        --------
+        In many cases, we have a DataFrame over which we want to calculate
+        ``value_counts`` over various columns.
+
+        >>> np.random.seed(12345)
+        ... n = 10
+        ... cols = np.array(['A', 'B', 'C', 'D'])
+        ... df = cols + pd.DataFrame((np.random.randint(3, size=(n, 4))
+        ...                          // [2, 1, 2, 1]).astype(str))
+        ... df.columns = cols
+        ... df = df.join(pd.DataFrame(np.random.randint(5, size=(n, 2)))
+        ...                .add_prefix('val'))
+        >>> df
+             A   B   C   D  val0   val1
+        0   A1  B1  C0  D1     2      4
+        1   A0  B1  C1  D2     3      3
+        2   A0  B2  C0  D1     4      3
+        3   A1  B1  C1  D1     0      3
+        4   A1  B0  C1  D1     0      0
+        5   A0  B2  C0  D2     3      2
+        6   A1  B1  C0  D1     4      4
+        7   A0  B0  C0  D0     0      1
+        8   A0  B1  C1  D1     2      2
+        9   A0  B2  C0  D0     2      1
+
+        We can return counts of unique values of any given column.
+
+        >>> df.A.value_counts()
+        A0    6
+        A1    4
+        Name: A, dtype: int64
+
+        We can also set the ``normalize`` parameter to ``True`` to get the relative
+        frequencies of each unique value.
+
+        >>> df.A.value_counts(normalize=True)
+        A0    0.6
+        A1    0.4
+        Name: A, dtype: float64
+
+        By default, ``value_counts`` returns results sorted in descending order.
+        Set the ``ascending`` parameter to True to reverse the order.
+
+        >>> df.A.value_counts(ascending=True)
+        A1    4
+        A0    6
+        Name: A, dtype: int64
+
+        Frequently, ``value_counts`` is used in conjunction with
+        ``DataFrame.GroupBy`` to obtain frequencies of unique values grouped
+        by other columns.
+
+        >>> df.groupby('B').A.value_counts()
+        B   A
+        B0  A0    1
+            A1    1
+        B1  A1    3
+            A0    2
+        B2  A0    3
+        Name: A, dtype: int64
+        >>> df.groupby('B').A.value_counts(normalize=True)
+        B   A
+        B0  A0    0.5
+            A1    0.5
+        B1  A1    0.6
+            A0    0.4
+        B2  A0    1.0
+        Name: A, dtype: float64
+        >>> df.groupby(['B', 'C']).A.value_counts()
+        B   C   A
+        B0  C0  A0    1
+            C1  A1    1
+        B1  C0  A1    2
+            C1  A0    2
+                A1    1
+        B2  C0  A0    3
+        Name: A, dtype: int64
+
+        Notice that using ``DataFrame.GroupBy`` with ``value_counts`` returns a
+        series with a ``MultiIndex``.
         """
         from pandas.core.algorithms import value_counts
         result = value_counts(self, sort=sort, ascending=ascending,
